@@ -1,5 +1,5 @@
 setup: out.r1cs
-	zokrates setup
+	zokrates setup -s gm17
 	zokrates export-verifier
 
 out.r1cs: *.zok

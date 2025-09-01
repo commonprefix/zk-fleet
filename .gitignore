@@ -8,3 +8,4 @@ verification.key
 verifier.sol 
 witness 
 verifier.sol
+__pycache__
