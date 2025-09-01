@@ -1,0 +1,5 @@
+import "hashes/poseidon/poseidon" as poseidon;
+
+def main(field a) {
+    assert(a * a == 4);
+}
