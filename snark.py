@@ -11,6 +11,8 @@ def as_zokrates_input(data):
             s.append(as_zokrates_input(o))
         elif isinstance(o, bool):
             s.append('1' if o else '0')
+        elif hasattr(o, 'as_zokrates_input'):
+            s.append(as_zokrates_input(o.as_zokrates_input()))
         else:
             s.append(str(o))
     return ' '.join(s)
