@@ -12,6 +12,9 @@ struct ShipPlacement {
     bool directionSelector;
 }
 
+/*
+ * Check a shipPlacement, and then place it on it's own "layer"
+ */
 def placeShip(ShipPlacement shipPlacement) -> field {
     u32 endPointX = if shipPlacement.directionSelector {
         shipPlacement.startPointX + SHIP_LENGTH
