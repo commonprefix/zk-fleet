@@ -1,0 +1,23 @@
+def inverse(field c) -> field {
+    return 1 / c;
+}
+def main(
+    field nonZeroVariable
+) {
+    field x = if nonZeroVariable == 0 {
+        0
+    } else { 
+        // assert: nonZeroVariable != 0 --> this doesn't hold here!
+        inverse(nonZeroVariable)
+    };
+}
+
+/* 
+// correct:
+def main(
+    field nonZeroVariable
+) {
+    field safeToInvert = if nonZeroVariable == 0 { 1 } else { nonZeroVariable };
+    field result = if nonZeroVariable == 0 { 0 } else { inverse(safeToInvert) };
+}
+*/

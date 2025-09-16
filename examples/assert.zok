@@ -1,0 +1,18 @@
+def isNotOne(field c) -> field {
+    assert(c != 1); // assert(oneVariable != 1 ==> c != 1) --> you don't get this guarantee!
+    return 0;
+}
+
+def main(
+    field oneVariable
+) {
+    field x = if oneVariable == 1 {
+        1
+    } else { 
+        // assert: oneVariable != 1 --> this doesn't hold here!
+        isNotOne(oneVariable)
+    };
+
+    assert(oneVariable == 1 || x == 0); // correct way to do it: use an implication instead! (oneVariable != 1 ==> x == 0)
+    assert(oneVariable != 1 || x == 1); // correct way to do it: use an implication instead! (oneVariable == 1 ==> x == 1)
+}
