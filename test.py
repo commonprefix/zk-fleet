@@ -74,9 +74,9 @@ class Board():
                 currentPos += __class__.BOARD_DIMENSION
 
         return partialBoard
-        
 
-    @staticmethod 
+
+    @staticmethod
     def create_new():
         ships = []
         for i in range(__class__.SHIP_COUNT):
@@ -88,9 +88,56 @@ class Board():
         randomness = random.randrange(0, fieldsize)
         return __class__(ships, randomness)
 
+
+def quick_board(ship1, ship2, ship3, randomness):
+    return Board([ShipPlacement(*ship1), ShipPlacement(*ship2), ShipPlacement(*ship3)], randomness)
+
+def test_boards():
+    # should pass
+    quick_board((1,1,1), (3,3,1), (5,5,1), 4533)
+    quick_board((2,2,1), (3,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,5,1), (7,7,0), 4533)
+
+    # should fail
+    quick_board((1,1,1), (1,1,1), (5,5,1), 4533)
+    quick_board((1,1,1), (5,5,1), (5,5,1), 4533)
+    quick_board((1,1,1), (2,2,1), (5,5,1), 4533)
+    quick_board((1,1,1), (4,4,1), (5,5,1), 4533)
+
+    quick_board((1,1,0), (1,1,0), (5,5,0), 4533)
+    quick_board((1,1,0), (5,5,0), (5,5,0), 4533)
+    quick_board((1,1,0), (2,2,0), (5,5,0), 4533)
+    quick_board((1,1,0), (4,4,0), (5,5,0), 4533)
+
+    # ship1 and ship2 intersect
+    quick_board((1,1,1), (0,0,0), (5,5,1), 4533)
+    quick_board((1,1,1), (1,0,0), (5,5,1), 4533)
+    quick_board((1,1,1), (2,0,0), (5,5,1), 4533)
+
+    # ship2 and ship 3 touch or intersect
+    quick_board((2,2,1), (4,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (5,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (6,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (8,6,1), (7,7,0), 4533)
+    quick_board((2,2,1), (6,7,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,7,1), (7,7,0), 4533)
+    quick_board((2,2,1), (8,7,1), (7,7,0), 4533)
+    quick_board((2,2,1), (6,8,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,8,1), (7,7,0), 4533)
+    quick_board((2,2,1), (8,8,1), (7,7,0), 4533)
+    quick_board((2,2,1), (6,9,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,9,1), (7,7,0), 4533)
+    quick_board((2,2,1), (8,9,1), (7,7,0), 4533)
+    quick_board((2,2,1), (6,10,1), (7,7,0), 4533)
+    quick_board((2,2,1), (7,10,1), (7,7,0), 4533)
+    quick_board((2,2,1), (8,10,1), (7,7,0), 4533)
+
+
+
 board_snark = SimpleSnark("board")
 Board.BOARD_PROVER_BACKEND = board_snark
 
-
 board = Board.create_new()
 print(board.print_board())
+
