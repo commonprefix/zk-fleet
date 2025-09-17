@@ -1,0 +1,25 @@
+import "hashes/sha256/sha256" as sha256;
+
+def commitUsingSha(u32 secret, u32 randomness) -> u32[8] {
+    // SHA-256 expects u32[N][16] blocks (N times 512-bit)
+    u32[1][16] mut block = [[0u32; 16] ; 1];
+
+    // put secret and randomness in first two positions
+    block[0][0] = secret;
+    block[0][1] = randomness;
+    u32[8] h = sha256(block);
+    return h;
+}
+
+// "I know a secret which (together with some randomness) commits to the known commitment."
+def main(
+    // statement -- public inputs
+    u32[8] commitment,
+    // witness -- private input
+    private u32 secret,
+    private u32 randomness
+) {
+    assert(commitment == commitUsingSha(secret, randomness));
+}
+
+// Number of constraints: 25942
