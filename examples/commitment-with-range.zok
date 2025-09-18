@@ -8,7 +8,7 @@ def commitUsingPoseidon(field secret, field randomness) -> field {
 }
 
 // "I know a secret which (together with some randomness) commits to the known commitment,
-// and the secret is a field element in [0,100]".
+// and the secret is a field element in [0,128)".
 def main(
     // statement -- public inputs
     field commitment,
@@ -17,8 +17,9 @@ def main(
     private field randomness
 ) {
     assert(commitment == commitUsingPoseidon(secret, randomness));
-    assert(secret >= 0 && secret <= 100);
-    // TODO: Is there a problem with this?
+
+    // ZoKrates has inequalieties built-in, so we can do the following:
+    assert(secret >= 0 && secret <= 127);
 }
 
-// Number of constraints: 765
+// Number of constraints using inequalities: 758
