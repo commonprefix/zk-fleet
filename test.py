@@ -77,15 +77,21 @@ class Board():
 
     @staticmethod
     def create_new():
-        ships = []
-        for i in range(__class__.SHIP_COUNT):
-            direction = random.randrange(0, 2) == 0
-            posX, posY = [random.randrange(0,  __class__.BOARD_DIMENSION - (0 if (i == 1) == direction else __class__.SHIP_LENGTH)) for i in range(2)]
-            # TODO: check that they don't touch other ships
-            ships.append(ShipPlacement(posX, posY, direction))
+        while True:
+            try:
+                ships = []
+                for i in range(__class__.SHIP_COUNT):
+                    direction = random.randrange(0, 2) == 0
+                    posX, posY = [random.randrange(0,  __class__.BOARD_DIMENSION - (0 if (i == 1) == direction else __class__.SHIP_LENGTH)) for i in range(2)]
+                    # TODO: check that they don't touch other ships
+                    ships.append(ShipPlacement(posX, posY, direction))
 
-        randomness = random.randrange(0, fieldsize)
-        return __class__(ships, randomness)
+                randomness = random.randrange(0, fieldsize)
+                ret = __class__(ships, randomness)
+                break
+            except AssertionError:
+                pass
+        return ret
 
 
 def create_board(ship1, ship2, ship3, randomness):
@@ -169,11 +175,25 @@ ABI_FILE = "game/out/Game.sol/Game.json"
 
 ABI = L1.load_abi(ABI_FILE)
 
+STAKE = 500_000_000_000_000_000
+
 game = L1.Contract(CONTRACT_ADDRESS, ABI)
 
-board = Board.create_new()
+board1 = Board.create_new()
+board1_proof_encoded = SimpleSnark.format_proof(board1.proof)[0]
 
-board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
+tx_receipt, logs = game._interact(PLAYER1, "newGame", [board1.boardCommitment, board1_proof_encoded, PLAYER2.address], STAKE)
 
-game._interact(PLAYER1, "newGame", [board.boardCommitment, board_proof_encoded, PLAYER2.address])
+print(logs)
 
+GAME_ID = logs[0]['args']['gameId']
+print(f"Playing game {GAME_ID}")
+
+board2 = Board.create_new()
+board2_proof_encoded = SimpleSnark.format_proof(board2.proof)[0]
+
+game._interact(PLAYER2, "joinGame", [GAME_ID, board2.boardCommitment, board2_proof_encoded], STAKE)
+
+res = game._call("games", [GAME_ID])
+
+print(res)
