@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Verifier as BoardVerifier} from "./BoardVerifier.sol"; 
+import {Verifier as AttackVerifier} from "./AttackVerifier.sol"; 
+
 uint constant BOARD_DIMENSION = 11;
 uint constant SHIP_COUNT = 3;
 uint constant SHIP_LENGTH = 3;
@@ -33,6 +36,13 @@ contract Game {
 
     mapping(uint => GameTracker) public games;
     uint public emptyGamePointer; // points toward the next empty game
+    BoardVerifier boardVerifier;
+    AttackVerifier attackVerifier;
+
+    constructor(BoardVerifier _boardVerifier, AttackVerifier _attackVerifier) {
+        boardVerifier = _boardVerifier;
+        attackVerifier = _attackVerifier;
+    }
 
     /**
      * Starts a new game
@@ -40,8 +50,8 @@ contract Game {
      * @param proof1 the proof that the board behind the commitment is well-formed
      * @param player2 optional. If non-zero, only specified other address may join this game
      */
-    function newGame(uint boardCommitment1, bytes calldata proof1, address player2) external payable {
-        // TODO: verify proof
+    function newGame(uint boardCommitment1, BoardVerifier.Proof calldata proof1, address player2) external payable {
+        require(boardVerifier.verifyTx(proof1, [boardCommitment1]), "Proof that board is well-formed is invalid");
         GameTracker storage curGame = games[emptyGamePointer];
         curGame.player1 = msg.sender;
         curGame.boardCommitment1 = boardCommitment1;
@@ -94,8 +104,8 @@ contract Game {
         _resolveWin(gameId, winner);
     }
 
-    function joinGame(uint gameId, uint boardCommitment2, bytes calldata proof2) external payable {
-        // TODO: verify proof
+    function joinGame(uint gameId, uint boardCommitment2, BoardVerifier.Proof calldata proof2) external payable {
+        require(boardVerifier.verifyTx(proof2, [boardCommitment2]), "Proof that board is well-formed is invalid");
         GameTracker storage game = games[gameId];
         require(game.player1 != address(0), "Game does not exist");
         require(game.boardCommitment2 == 0, "Player2 already joined");
@@ -136,7 +146,7 @@ contract Game {
         game.lastMove = uint32(block.number);
     }
 
-    function resolveMove(uint gameId, bool isHit, bytes calldata proof) external {
+    function resolveMove(uint gameId, uint isHit, AttackVerifier.Proof calldata proof) external {
         GameTracker storage game = games[gameId];
         require(game.gameEnded == false, "Game has ended");
         require(game.target != NO_TARGET, "Cannot resolve before a move has been made");
@@ -145,7 +155,7 @@ contract Game {
         if(game.turn % 2 == 0) {
             // this is player1's attack on the board of player2
             boardUnderAttack = game.boardCommitment2;
-            if(isHit) {
+            if(isHit == 1) {
                 game.hitCounter1 += 1;
                 if(game.hitCounter1 == SHIP_COUNT * SHIP_LENGTH) {
                     _resolveWin(gameId, true);
@@ -154,14 +164,14 @@ contract Game {
         } else {
             // this is player2's attack on the board of player1
             boardUnderAttack = game.boardCommitment1;
-            if(isHit) {
+            if(isHit == 1) {
                 game.hitCounter2 += 1;
                 if(game.hitCounter2 == SHIP_COUNT * SHIP_LENGTH) {
                     _resolveWin(gameId, false);
                 }
             }
         }
-        // verify proof against (boardUnderAttack, isHit, game.target)
+        require(attackVerifier.verifyTx(proof, [boardUnderAttack, isHit, game.target]), "Attack proof does not verify");
         game.target = NO_TARGET; // reset target
         game.turn += 1; // next turn
         game.lastMove = uint32(block.number);
