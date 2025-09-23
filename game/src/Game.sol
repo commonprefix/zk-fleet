@@ -61,6 +61,7 @@ contract Game {
         if (msg.value > 0) {
             curGame.stake = msg.value;
         }
+        curGame.target = 255;
         emit NewGame(emptyGamePointer, msg.sender, player2, msg.value);
         emptyGamePointer += 1;
     }
@@ -73,6 +74,17 @@ contract Game {
 
         // allow player1 to win the game and get their stake back
         _resolveWin(gameId, true); 
+    }
+
+    function isGameTimeout(uint gameId) external view returns (bool) {
+        GameTracker storage game = games[gameId];
+        if (game.gameEnded) {
+            return false;
+        }
+        if (game.boardCommitment2 == 0) {
+            return false;
+        }
+        return game.lastMove + TIMEOUT_PERIOD < block.number;
     }
 
     function timeoutGame(uint gameId) external {
@@ -171,7 +183,7 @@ contract Game {
                 }
             }
         }
-        require(attackVerifier.verifyTx(proof, [boardUnderAttack, isHit, game.target]), "Attack proof does not verify");
+        require(attackVerifier.verifyTx(proof, [boardUnderAttack, game.target, isHit]), "Attack proof does not verify");
         game.target = NO_TARGET; // reset target
         game.turn += 1; // next turn
         game.lastMove = uint32(block.number);
@@ -202,7 +214,10 @@ contract Game {
         } else {
             amount = game.stake * 2; // get both player's stake
         }
-        bool okay = payable(msg.sender).send(amount);
-        require(okay, "Withdrawing failed");
+
+        game.withdrawn = true;
+
+        (bool ok, ) = msg.sender.call{value: amount}(""); // interaction
+        require(ok, "Transfer failed");
     }
 }
