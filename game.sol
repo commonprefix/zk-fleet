@@ -5,6 +5,7 @@ uint constant BOARD_DIMENSION = 11;
 uint constant SHIP_COUNT = 3;
 uint constant SHIP_LENGTH = 3;
 uint constant TIMEOUT_PERIOD = 100; // in blocks, a constant for now
+uint8 constant NO_TARGET = 255;
 
 struct GameTracker {
     uint256 boardCommitment1; // the commitment to the board of player 1
@@ -74,7 +75,7 @@ contract Game {
         // check which player's turn it is
         bool winner;
         if(game.turn % 2 == 0) {
-            if(game.target == 0) {
+            if(game.target == NO_TARGET) {
                 // on player1's turn, player1 did not attack
                 winner = false; // player2 wins
             } else {
@@ -82,7 +83,7 @@ contract Game {
                 winner = true; // player1 wins
             }
         } else {
-            if(game.target == 0) {
+            if(game.target == NO_TARGET) {
                 // on player2's turn, player1 did not attack
                 winner = true; // player1 wins
             } else {
@@ -116,7 +117,7 @@ contract Game {
     function makeMove(uint gameId, uint8 target) external {
         GameTracker storage game = games[gameId];
         require(game.gameEnded == false, "Game has ended");
-        require(game.target == 0, "Previous turn not yet resolved");
+        require(game.target == NO_TARGET, "Previous turn not yet resolved");
         require(target < BOARD_DIMENSION * BOARD_DIMENSION, "Invalid target");
 
         if (game.turn % 2 == 0) {
@@ -138,7 +139,7 @@ contract Game {
     function resolveMove(uint gameId, bool isHit, bytes calldata proof) external {
         GameTracker storage game = games[gameId];
         require(game.gameEnded == false, "Game has ended");
-        require(game.target != 0, "Cannot resolve before a move has been made");
+        require(game.target != NO_TARGET, "Cannot resolve before a move has been made");
         // actually don't have to check for the player here - only someone that KNOWS the board can call this function
         uint boardUnderAttack;
         if(game.turn % 2 == 0) {
@@ -161,7 +162,7 @@ contract Game {
             }
         }
         // verify proof against (boardUnderAttack, isHit, game.target)
-        game.target = 0; // reset target
+        game.target = NO_TARGET; // reset target
         game.turn += 1; // next turn
         game.lastMove = uint32(block.number);
     }
