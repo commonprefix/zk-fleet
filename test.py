@@ -149,3 +149,31 @@ Board.BOARD_PROVER_BACKEND = board_snark
 board = Board.create_new()
 print(board.print_board())
 
+from web3 import Web3
+import L1
+import os
+
+# use local anvil devnet
+L1.web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:8545"))
+chain_id = 31337
+
+# Address and private key
+private_key = os.getenv("PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+PLAYER1 = L1.OwnedL1Identity(private_key)
+
+PLAYER2 = L1.OwnedL1Identity("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d")
+
+CONTRACT_ADDRESS = "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
+
+ABI_FILE = "game/out/Game.sol/Game.json"
+
+ABI = L1.load_abi(ABI_FILE)
+
+game = L1.Contract(CONTRACT_ADDRESS, ABI)
+
+board = Board.create_new()
+
+board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
+
+game._interact(PLAYER1, "newGame", [board.boardCommitment, board_proof_encoded, PLAYER2.address])
+
