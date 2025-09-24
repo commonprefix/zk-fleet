@@ -7,8 +7,8 @@ import time
 from test import *
 
 # use local anvil devnet
-if int(os.getenv('PROD', '0')) > 0:
-    L1.web3 = Web3(Web3.HTTPProvider("https://ethereum-sepolia-public.nodies.app"))
+if int(os.getenv('LOCAL', '0')) == '0':
+    L1.web3 = Web3(Web3.HTTPProvider(os.getenv("ETH_RPC_URL", "https://ethereum-sepolia-public.nodies.app")))
     L1.chain_id = 11155111
     CONTRACT_ADDRESS = "0x59134804d0Cf3ed908f0f2B6caA55E9D3d9Ac29c"
 else:
@@ -169,7 +169,7 @@ class Game:
             isOurAction, isAttackAction = self.isOurAction()
             if isOurAction:
                 if isAttackAction:
-                    print(f"Please attack now!")
+                    print(f"We should attack now")
                 else:
                     self._resolve()
                     self._update()
