@@ -149,7 +149,7 @@ def tests_should_raise(funcs):
             raise AssertionError("AssertionError was not raised (e.g. 'Generating the proof failed')")
 
 
-board_snark = SimpleSnark("board")
+board_snark = SimpleSnark("board-reference")
 Board.BOARD_PROVER_BACKEND = board_snark
 
 board = Board.create_new()
@@ -159,45 +159,55 @@ from web3 import Web3
 import L1
 import os
 import sys
+import time
 
 # use local anvil devnet
-L1.web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:8545"))
-chain_id = 31337
+if os.getenv('PROD', False):
+    L1.web3 = Web3(Web3.HTTPProvider("https://ethereum-sepolia.rpc.subquery.network/public"))
+    L1.chain_id = 11155111
+    CONTRACT_ADDRESS = "0x1e1a82A3BEFf7F9935A4aCBaac2814f1Ec1Eca7D"
+else:
+    L1.web3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+    L1.chain_id = 31337
+    CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
 
-# Address and private key
-private_key = os.getenv("PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
-PLAYER1 = L1.OwnedL1Identity(private_key)
+board = Board.create_new()
+board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
 
-PLAYER2 = L1.OwnedL1Identity("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d")
+private_key = os.getenv("PLAYER_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
 
-CONTRACT_ADDRESS = "0x725314746e727f586E9FCA65AeD5dBe45aA71B99"
-
+PLAYER = L1.OwnedL1Identity(private_key)
 ABI_FILE = "game/out/Game.sol/Game.json"
 
 ABI = L1.load_abi(ABI_FILE)
 
-STAKE = 500_000_000_000_000_000
-
 game = L1.Contract(CONTRACT_ADDRESS, ABI)
 
-board1 = Board.create_new()
-board1_proof_encoded = SimpleSnark.format_proof(board1.proof)[0]
+if sys.argv[1] == 'new':
+    # if you are player one, you can select your opponent and the stake
+    player2 = sys.argv[2]
+    stake = int(sys.argv[3])
 
-tx_receipt, logs = game._interact(PLAYER1, "newGame", [board1.boardCommitment, board1_proof_encoded, PLAYER2.address], STAKE)
+    # interact with the smart contract to create a new game
+    tx_receipt, logs = game._interact(PLAYER, "newGame", [board.boardCommitment, board_proof_encoded, player2], stake)
 
-print(logs)
+    gameId = logs[0]['args']['gameId']
+    print(f"CREATED GAME WITH ID {gameId} FOR PLAYER {player2} WITH STAKE {stake}")
+elif sys.argv[1] == 'join':
+    # if you are player two, you can specify the game you want to connect to
+    gameId = int(sys.argv[2])
 
-GAME_ID = logs[0]['args']['gameId']
-print(f"Playing game {GAME_ID}")
+    res = game._call("games", [gameId])
+    stake = res[13]
 
-board2 = Board.create_new()
-board2_proof_encoded = SimpleSnark.format_proof(board2.proof)[0]
-
-game._interact(PLAYER2, "joinGame", [GAME_ID, board2.boardCommitment, board2_proof_encoded], STAKE)
-
-res = game._call("games", [GAME_ID])
-
-print(res)
+    # interact with the smart contract to join the game
+    game._interact(PLAYER, "joinGame", [gameId, board.boardCommitment, board_proof_encoded], stake)
+elif sys.argv[2] == 'rejoin':
+    # if your script terminated, rejoin to a running game
+    gameId = int(sys.argv[2])
+else:
+    print(f"Unsupported option. Either use 'new', 'join' or 'rejoin'")
+    sys.exit(-1)
 
 class Game:
     backendContract: L1.Contract
@@ -333,23 +343,22 @@ class Game:
             print()
 
 
-
-    
-attackSnark = SimpleSnark('attack')
+attackSnark = SimpleSnark('attack-reference')
 Game.backendAttackProver = attackSnark
 Game.backendContract = game
 
-gameFramework = Game(GAME_ID, PLAYER1, board1)
-opponentGameFramework = Game(GAME_ID, PLAYER2, board2)
+gameFramework = Game(gameId, PLAYER, board)
 
-player2target = 0
 while not gameFramework.gameEnded:
-    # perform move of player 1
+    while not gameFramework.isOurAction()[0]:
+        gameFramework._update()
+        print(f"Waiting...")
+        time.sleep(2)
+
+    # perform our move
     gameFramework.print()
     while True:
         try:
-            print("Enemy ships are at:")
-            print(opponentGameFramework.board.print_board())
             target_str = input("Enter position that you want to hit> ")
             if target_str == 'q':
                 sys.exit(-1)
@@ -366,9 +375,3 @@ while not gameFramework.gameEnded:
             print(str(e))
             pass
     gameFramework.move(target)
-
-    opponentGameFramework._update() # resolves player1's attack
-    opponentGameFramework.move(player2target)
-    player2target += 1
-
-    gameFramework._update() # resolves player2's attack

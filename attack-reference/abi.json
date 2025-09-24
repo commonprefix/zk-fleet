@@ -16,9 +16,13 @@
       "type": "bool"
     },
     {
-      "name": "board",
+      "name": "boardDecomposition",
       "public": false,
-      "type": "field"
+      "type": "array",
+      "components": {
+        "size": 121,
+        "type": "bool"
+      }
     },
     {
       "name": "randomness",
