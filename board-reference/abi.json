@@ -1,0 +1,47 @@
+{
+  "inputs": [
+    {
+      "name": "boardCommitment",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "shipPlacements",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 3,
+        "type": "struct",
+        "components": {
+          "name": "ShipPlacement",
+          "generics": [],
+          "members": [
+            {
+              "name": "startPointX",
+              "type": "u32"
+            },
+            {
+              "name": "startPointY",
+              "type": "u32"
+            },
+            {
+              "name": "directionSelector",
+              "type": "bool"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "randomness",
+      "public": false,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "tuple",
+    "components": {
+      "elements": []
+    }
+  }
+}
