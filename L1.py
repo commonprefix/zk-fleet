@@ -29,14 +29,20 @@ def interact_transact(contract_address, abi, function_name: str, args: list, add
     if overrideGas is None:
         overrideGas = 10000000
 
+    base_fee = web3.eth.get_block("latest")["baseFeePerGas"]
+    priority_fee = Web3.to_wei(0.01, "gwei")  # your desired tip
+    max_fee_per_gas = base_fee + priority_fee * 2
+    
     txPreset = {
         "chainId": chain_id,
-        #"gasPrice": web3.eth.gas_price,
         "from": address,
+        "value": value,  # Amount of ETH you want to send
         "nonce": web3.eth.get_transaction_count(address),
-        "value": value,
-        "gas": overrideGas,  
-        "gasPrice": web3.eth.gas_price,
+        # You can optionally set the gas limit and gas price, or leave it to be auto-calculated
+        "gas": 1000000,  
+        "maxFeePerGas": max_fee_per_gas,
+        "maxPriorityFeePerGas": priority_fee,
+        "type": 2,
     }
     print(f"Sending value {value}")
 
@@ -76,6 +82,11 @@ def interact_transact(contract_address, abi, function_name: str, args: list, add
 
 def interact_send(contract_address, value: int, address, private_key):
     # Prepare the transaction
+    
+    base_fee = web3.eth.get_block("latest")["baseFeePerGas"]
+    priority_fee = Web3.to_wei(1, "gwei")  # your desired tip
+    max_fee_per_gas = base_fee + priority_fee * 2
+    
     tx = {
         "chainId": chain_id,
         "to": contract_address,
@@ -84,7 +95,9 @@ def interact_send(contract_address, value: int, address, private_key):
         "nonce": web3.eth.get_transaction_count(address),
         # You can optionally set the gas limit and gas price, or leave it to be auto-calculated
         "gas": 1000000,  
-        "gasPrice": web3.eth.gas_price,
+        "maxFeePerGas": max_fee_per_gas,
+        "maxPriorityFeePerGas": priority_fee,
+        "type": 2,
     }
     print(f"SENDING {value} WEI")
 

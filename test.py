@@ -1,6 +1,7 @@
 from snark import SimpleSnark
 import random # don't use that in production
 from poseidon import poseidon, fieldsize
+import json
 
 class ShipPlacement:
     def __init__(self, startPointX, startPointY, directionSelector):
@@ -11,6 +12,10 @@ class ShipPlacement:
     # to make it compatible with snark.py as_zokrates_input
     def as_zokrates_input(self):
         return [self.startPointX, self.startPointY, self.directionSelector]
+
+    @staticmethod
+    def from_zokrates_input(input):
+        return __class__(*input)
 
 class Board():
     SHIP_COUNT: int = 3
@@ -73,7 +78,15 @@ class Board():
                 currentPos += __class__.BOARD_DIMENSION
 
         return partialBoard
+    
+    def export_board(self):
+        return json.dumps({'ships': [ship.as_zokrates_input() for ship in self.ships], 'randomness': self.randomness}).encode().hex()
 
+    @staticmethod
+    def import_board(backupString: str):
+        d = json.loads(bytes.fromhex(backupString).decode())
+        ships = [ShipPlacement.from_zokrates_input(ship) for ship in d['ships']]
+        return __class__(ships, d['randomness'])
 
     @staticmethod
     def create_new():
@@ -148,9 +161,16 @@ def tests_should_raise(funcs):
         else:
             raise AssertionError("AssertionError was not raised (e.g. 'Generating the proof failed')")
 
-
 board_snark = SimpleSnark("board-reference")
 Board.BOARD_PROVER_BACKEND = board_snark
+
+# sanity check that board exporting works
+board = Board.create_new()
+exported = board.export_board()
+print(f"Exported: {exported}")
+imported = Board.import_board(exported)
+assert board.board == imported.board
+assert board.randomness == imported.randomness
 
 board = Board.create_new()
 print(board.print_board())
@@ -162,17 +182,14 @@ import sys
 import time
 
 # use local anvil devnet
-if os.getenv('PROD', False):
-    L1.web3 = Web3(Web3.HTTPProvider("https://ethereum-sepolia.rpc.subquery.network/public"))
+if int(os.getenv('PROD', '0')) > 0:
+    L1.web3 = Web3(Web3.HTTPProvider("https://ethereum-sepolia-public.nodies.app"))
     L1.chain_id = 11155111
-    CONTRACT_ADDRESS = "0x1e1a82A3BEFf7F9935A4aCBaac2814f1Ec1Eca7D"
+    CONTRACT_ADDRESS = "0x59134804d0Cf3ed908f0f2B6caA55E9D3d9Ac29c"
 else:
     L1.web3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
     L1.chain_id = 31337
     CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
-
-board = Board.create_new()
-board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
 
 private_key = os.getenv("PLAYER_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
 
@@ -188,6 +205,10 @@ if sys.argv[1] == 'new':
     player2 = sys.argv[2]
     stake = int(sys.argv[3])
 
+    board = Board.create_new()
+    print(f"BACKUP YOUR BOARD: {board.export_board()}")
+    board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
+
     # interact with the smart contract to create a new game
     tx_receipt, logs = game._interact(PLAYER, "newGame", [board.boardCommitment, board_proof_encoded, player2], stake)
 
@@ -200,11 +221,18 @@ elif sys.argv[1] == 'join':
     res = game._call("games", [gameId])
     stake = res[13]
 
+    board = Board.create_new()
+    print(f"BACKUP YOUR BOARD: {board.export_board()}")
+    board_proof_encoded = SimpleSnark.format_proof(board.proof)[0]
+
     # interact with the smart contract to join the game
     game._interact(PLAYER, "joinGame", [gameId, board.boardCommitment, board_proof_encoded], stake)
-elif sys.argv[2] == 'rejoin':
+elif sys.argv[1] == 'rejoin':
     # if your script terminated, rejoin to a running game
     gameId = int(sys.argv[2])
+    boardBackup = sys.argv[3]
+
+    board = Board.import_board(boardBackup)
 else:
     print(f"Unsupported option. Either use 'new', 'join' or 'rejoin'")
     sys.exit(-1)
@@ -351,9 +379,9 @@ gameFramework = Game(gameId, PLAYER, board)
 
 while not gameFramework.gameEnded:
     while not gameFramework.isOurAction()[0]:
+        print(f"Waiting... Press enter to continue")
+        input()
         gameFramework._update()
-        print(f"Waiting...")
-        time.sleep(2)
 
     # perform our move
     gameFramework.print()
