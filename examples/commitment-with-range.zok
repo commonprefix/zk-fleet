@@ -1,0 +1,25 @@
+
+import "hashes/poseidon/poseidon" as poseidon;
+
+const field P_MINUS_ONE = 21888242871839275222246405745257275088548364400416034343698204186575808495616;
+
+def commitUsingPoseidon(field secret, field randomness) -> field {
+    return poseidon([secret, randomness]);
+}
+
+// "I know a secret which (together with some randomness) commits to the known commitment,
+// and the secret is a field element in [0,128)".
+def main(
+    // statement -- public inputs
+    field commitment,
+    // witness -- private input
+    private field secret,
+    private field randomness
+) {
+    assert(commitment == commitUsingPoseidon(secret, randomness));
+
+    // ZoKrates has inequalieties built-in, so we can do the following:
+    assert(secret >= 0 && secret <= 127);
+}
+
+// Number of constraints using inequalities: 758

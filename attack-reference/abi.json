@@ -1,0 +1,39 @@
+{
+  "inputs": [
+    {
+      "name": "boardCommitment",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "position",
+      "public": true,
+      "type": "u32"
+    },
+    {
+      "name": "isHit",
+      "public": true,
+      "type": "bool"
+    },
+    {
+      "name": "boardDecomposition",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 121,
+        "type": "bool"
+      }
+    },
+    {
+      "name": "randomness",
+      "public": false,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "tuple",
+    "components": {
+      "elements": []
+    }
+  }
+}

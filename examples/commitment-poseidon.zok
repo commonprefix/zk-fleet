@@ -1,0 +1,22 @@
+import "hashes/poseidon/poseidon" as poseidon;
+
+def commitUsingPoseidon(field secret, field randomness) -> field {
+    return poseidon([secret, randomness]);
+}
+
+// "I know a secret which (together with some randomness) commits to the known commitment."
+//
+// EXAMPLES:
+// 42, 1993 -> 3218876152071309830764723554014386374707796851655023455045545023069410016615
+// 578982 98824455 -> 12178043633749404611900228859774058380290927692596228417987860186582579586418
+def main(
+    // statement -- public inputs
+    field commitment,
+    // witness -- private input
+    private field secret,
+    private field randomness
+) {
+    assert(commitment == commitUsingPoseidon(secret, randomness));
+}
+
+// Number of constraints: 241

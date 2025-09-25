@@ -1,0 +1,13 @@
+abi.json 
+out 
+out.r1cs 
+out.wtns 
+proof.json 
+proving.key 
+verification.key 
+verifier.sol 
+witness 
+verifier.sol
+__pycache__
+gaslog.txt
+*.ztf

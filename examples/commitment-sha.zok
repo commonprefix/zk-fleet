@@ -1,0 +1,7 @@
+import "hashes/sha256/512bitPadded" as sha256;
+
+def main(u32[8] commitment, private u32[8] secret, private u32[8] randomness) {
+    assert(commitment == sha256(secret, randomness));
+}
+
+// gate count: 49168
