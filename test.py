@@ -175,3 +175,5 @@ if __name__ == "__main__":
 
     board = Board.create_new()
     print(board.print_board())
+
+    test_boards()
