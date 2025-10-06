@@ -6,13 +6,14 @@ def main(
 ) {
     field x = if nonZeroVariable == 0 {
         0
-    } else { 
-        // assert: nonZeroVariable != 0 --> this doesn't hold here!
+    } else {
+        // the assertion `nonZeroVariable != 0` does not hold here!
+        // Run `zokrates compute-witness -a 0` to see what happens.
         inverse(nonZeroVariable)
     };
 }
 
-/* 
+/*
 // correct:
 def main(
     field nonZeroVariable
