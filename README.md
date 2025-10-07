@@ -18,9 +18,9 @@ In [examples/](examples/) you can find the following ZoKrates code for the follo
 To compile one of the examples, you can navigate to the [examples/](examples/) directory and use `make FILE=<filename>.zok`. For example, use `make FILE=commitment-sha.zok` to build `commitment-sha.zok`
 
 ## Zero-knowledge battleships
+In `board\main.zok` and `attack\main.zok` you will find the ZoKrates code for generating and verifying proofs for a correct board setup and a valid attack result. These two files contain some TODOs, which are to be filled during the workshop.
 
-
-`attack-reference` and `board-reference` contain a reference solution that is deployed on `Ethereum Sepolia`.
+Folders `attack-reference` and `board-reference` contain a reference solution that is deployed on `Ethereum Sepolia`.
 The game contract can be found in `game/src/Game.sol` and is deployed at `0x59134804d0Cf3ed908f0f2B6caA55E9D3d9Ac29c`.
 You can play the deployed version of the game:
 - `python3 play.py new <player2 address> <stake in wei>`. Create a new game.

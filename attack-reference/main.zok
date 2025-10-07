@@ -22,7 +22,11 @@ def main(
     for u32 i in 0..BOARD_POSITIONS {
         board = board + if boardDecomposition[i] {powers_of_two[i]} else {0};
     }
-    // TODO
+
+    assert(boardCommitment == poseidon([board, randomness]));
+
+    assert(!isHit || boardDecomposition[position]);
+    assert(isHit || !boardDecomposition[position]);
 }
 
-// Number of constraints in reference solution: 885. Can you do better?
+// Number of constraints: 885

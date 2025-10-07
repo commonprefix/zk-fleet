@@ -9,16 +9,7 @@ def main(
     } else {
         // the assertion `nonZeroVariable != 0` does not hold here!
         // Run `zokrates compute-witness -a 0` to see what happens.
+        // TODO: Can you fix this?
         inverse(nonZeroVariable)
     };
 }
-
-/*
-// correct:
-def main(
-    field nonZeroVariable
-) {
-    field safeToInvert = if nonZeroVariable == 0 { 1 } else { nonZeroVariable };
-    field result = if nonZeroVariable == 0 { 0 } else { inverse(safeToInvert) };
-}
-*/

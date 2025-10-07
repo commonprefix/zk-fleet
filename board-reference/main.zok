@@ -41,8 +41,19 @@ def checkShipsDontTouch(ShipPlacement ship1, ShipPlacement ship2) -> bool {
     return if ship1.directionSelector {
         if ship2.directionSelector {
             // Case 1: Both are in the X direction
-
-            // TODO
+            // they certainly don't touch if they are more than 2 fields in y direction apart
+            if ship1.startPointY >= ship2.startPointY + 2 || ship2.startPointY >= ship1.startPointY + 2 {
+                true
+            }
+            // else, their x positions must be at least SHIP_LENGTH + 1 fields apart
+            else {
+                if ship1.startPointX >= ship2.startPointX + SHIP_LENGTH + 1 || ship2.startPointX >= ship1.startPointX + SHIP_LENGTH + 1 {
+                    true
+                } else {
+                    // else, they touch (at least diagonally)
+                    false
+                }
+            }
         } else {
             // Case 2: ship1 is in X direction, ship2 in Y direction
             if ship2.startPointY >= ship1.startPointY + 2                   // ship2 is below ship1, starts at least 2 fields after it
@@ -75,8 +86,14 @@ def checkShipsDontTouch(ShipPlacement ship1, ShipPlacement ship2) -> bool {
             }
             // else, their Y positions is at least SHIP_LENGTH + 1 fields apart
             else {
-
-                // TODO
+                if ship1.startPointY >= ship2.startPointY + SHIP_LENGTH + 1 || ship2.startPointY >= ship1.startPointY + SHIP_LENGTH + 1 {
+                    true
+                }
+                else
+                {
+                    // else, they touch (at least diagonally)
+                    false
+                }
             }
         }
     };
@@ -127,10 +144,10 @@ def main(
 
     field mut board = 0;
     for u32 s in 0..SHIP_COUNT {
+        // complexity O(SHIP_COUNT^2) to check if ships touch. Could be optimized to O(SHIP_COUNT) by checking the current board state
         board = board + placeShip(shipPlacements[s]);
     }
-
-    // TODO: check commitment
+    assert(boardCommitment == poseidon([board, randomness]));
 }
 
-// Number of constraints in reference solution: 4921. Can you do better?
+// Number of constraints: 4921
